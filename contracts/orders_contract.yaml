@@ -1,5 +1,9 @@
 dataset: orders
 owner: commerce-data
+actions:
+  critical: block
+  warning: quarantine
+  info: warn
 freshness:
   column: updated_at
   max_delay_minutes: 30

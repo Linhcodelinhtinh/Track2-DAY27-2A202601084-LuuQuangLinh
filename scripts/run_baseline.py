@@ -49,8 +49,14 @@ def main() -> None:
     text_result = detect_text_length_shift(
         [d["content"] for d in docs], history["mean_text_length"].tail(14).tolist()
     )
+    kb_published = pd.to_datetime([d.get("published_at") for d in docs], utc=True, errors="coerce").dropna()
+    kb_freshness_minutes = (
+        (pd.Timestamp(datetime.now(timezone.utc)) - kb_published.max()).total_seconds() / 60.0
+        if not kb_published.empty else 0.0
+    )
+    kb_freshness_anomaly = bool(kb_freshness_minutes > 60.0)
 
-    # Demo SLO: one check event for this run.
+    # Demo SLO: evaluate contract check event
     bad = 1 if critical_failed else 0
     contract_slo = calculate_slo(0.999, bad_events=bad, total_events=1)
 
@@ -65,6 +71,8 @@ def main() -> None:
         "critical_contract_failures": len(critical_failed),
         "row_count_anomaly": row_result,
         "freshness_minutes": freshness_minutes,
+        "kb_freshness_minutes": kb_freshness_minutes,
+        "kb_freshness_anomaly": kb_freshness_anomaly,
         "kb_text_length_signal": text_result,
         "contract_slo": contract_slo,
         "sample_blast_radius_from_stg_orders": blast_radius,
@@ -78,6 +86,7 @@ def main() -> None:
     print(f"critical contract fails  : {len(critical_failed)}")
     print(f"row-count anomaly        : {row_result['is_anomaly']} ({row_result['method']}, score={row_result['score']:.2f})")
     print(f"freshness minutes        : {freshness_minutes:.1f}")
+    print(f"KB freshness minutes     : {kb_freshness_minutes:.1f} (stale={kb_freshness_anomaly})")
     print(f"KB length anomaly        : {text_result['is_anomaly']}")
     print(f"sample blast radius      : {', '.join(blast_radius)}")
     print(f"report                    : {out.relative_to(ROOT)}")

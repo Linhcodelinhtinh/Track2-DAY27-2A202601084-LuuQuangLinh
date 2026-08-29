@@ -14,13 +14,11 @@ models:
       - name: currency
         data_tests:
           - accepted_values:
-              arguments:
-                values: ['USD', 'VND']
+              values: ['USD', 'VND']
       - name: status
         data_tests:
           - accepted_values:
-              arguments:
-                values: ['pending', 'completed', 'refunded', 'cancelled']
+              values: ['pending', 'completed', 'refunded', 'cancelled']
 
   - name: stg_customers
     columns:

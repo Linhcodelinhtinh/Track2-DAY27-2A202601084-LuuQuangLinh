@@ -8,7 +8,8 @@ with completed_orders as (
     where status = 'completed'
 ),
 active_customers as (
-    select *
+    -- Deduplicate active customer records by customer_id to prevent join fanout / revenue inflation
+    select distinct customer_id
     from {{ ref('stg_customers') }}
     where is_active = true
 )
