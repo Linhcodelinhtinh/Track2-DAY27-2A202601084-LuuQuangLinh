@@ -4,22 +4,7 @@ Ghi lại 3 quyết định kỹ thuật cốt lõi trong quá trình thiết k�
 
 ---
 
-## Decision 1: Phân cấp Severity và Hành động tự động trong Data Contract
-- **Hypothesis**: Kiểm tra dữ liệu đầu vào cần hỗ trợ kiểm tra kiểu dữ liệu (type checking), độ tươi mới (freshness), phân cấp mức độ lỗi (`critical`, `warning`, `info`) và tự động quyết định hành động (`block`, `quarantine`, `warn`, `pass`) thay vì chỉ báo lỗi nhị phân pass/fail.
-- **Prompt / request to agent**: Cập nhật `orders_contract.yaml`, `contract_validator.py`, và `validate_orders.py` với type validation, freshness, phân loại action và kiểm thử với lỗi `duplicate_pk`.
-- **Agent proposal**:
-  1. Thêm schema types (`integer`, `number`, `datetime`) và độ trễ tối đa (`max_delay_minutes: 60`).
-  2. Bổ sung hàm `_check_type`, kiểm tra `freshness`, hàm xác định hành động `determine_action`, và hàm tách dòng lỗi `quarantine_records`.
-  3. Xây dựng Checkpoint Great Expectations 1.x tự động gán nhãn hành động tương ứng.
-- **Evidence/test**:
-  - `pytest tests_public/test_contracts.py` đạt 100% pass.
-  - Khi inject lỗi `duplicate_pk`, hệ thống bắt 1 lỗi critical và kích hoạt hành động `BLOCK`.
-- **Accept / reject / revise**: Accept.
-- **Why**: Giúp tự động hóa phản ứng vận hành, bảo vệ pipeline khỏi dữ liệu hỏng mà không cần can thiệp thủ công.
-
----
-
-## Decision 2: Bảo vệ tầng Transformation bằng dbt Unit Test chống SCD2 Fanout
+## Decision 1: Bảo vệ tầng Transformation bằng dbt Unit Test chống SCD2 Fanout
 - **Hypothesis**: `not_null/unique` là data tests kiểm tra dữ liệu thực tế runtime, không kiểm tra được lỗi logic trong SQL. Bảng chiều `customers` có nhiều phiên bản active (`is_active = true`) sẽ gây join fanout nhân đôi doanh thu nếu không có unit test phát hiện và deduplicate.
 - **Prompt / request to agent**: Thêm generic test, singular test, giải thích sự khác biệt giữa data test và unit test, và viết unit test nhỏ nhất phát hiện lạm phát doanh thu do lỗi SCD2.
 - **Agent proposal**:
@@ -34,7 +19,7 @@ Ghi lại 3 quyết định kỹ thuật cốt lõi trong quá trình thiết k�
 
 ---
 
-## Decision 3: Anomaly Detection theo Ngữ cảnh & Cảnh báo SRE Multi-Window Multi-Burn-Rate
+## Decision 2: Anomaly Detection theo Ngữ cảnh & Cảnh báo SRE Multi-Window Multi-Burn-Rate
 - **Hypothesis**: Z-score thông thường dễ bị sai khi dữ liệu có tính chu kỳ (seasonality theo ngày trong tuần) hoặc chứa outlier. Cảnh báo lỗi dựa trên 1 cửa sổ đơn lẻ cũng dễ gây alert fatigue do các đột biến ngắn hạn (transient spikes).
 - **Prompt / request to agent**: Nâng cấp `detect_anomaly(method="auto")` xử lý seasonality/outlier và cài đặt `evaluate_multiwindow_burn` theo nguyên lý Google SRE.
 - **Agent proposal**:
